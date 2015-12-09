@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.views.debug import default_urlconf
 
 urlpatterns = [
-url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', include(admin.site.urls)),
     url(r'^$', default_urlconf),
+    url(r'^property/', include('property.urls', namespace="property")),
 ]
