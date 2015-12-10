@@ -93,8 +93,8 @@ if system_type == "prod_linux":
         	'NAME': 'djangostack',
         	'HOST': '/opt/bitnami/postgresql',
         	'PORT': '5432',
-        	'USER': 'bitnami',
-        	'PASSWORD': 'fd55f879d7'
+        	'USER': 'postgres',
+        	'PASSWORD': 'bitnami'
     		}	
 	}
 
