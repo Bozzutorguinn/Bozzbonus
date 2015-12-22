@@ -38,6 +38,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LOGIN_URL = '/user_access/login/'
+
+LOGIN_REDIRECT_URL = '/property/property/'
+
 
 # Application definition
 
@@ -49,6 +53,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'property',
+    'user_access',
 )
 
 MIDDLEWARE_CLASSES = (
