@@ -1,3 +1,15 @@
+{% extends 'Project/base.html' %}
+
+{% block content %}
+
 <h1>This is Michael's Test of an approved login.</h1>
 
-<a href="{% url 'user_access:logout' %}" >Log-Out</a>
+<table>
+{% for property in properties.all %}
+<tr>
+    <td>{{ property.prop_name }}</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}
