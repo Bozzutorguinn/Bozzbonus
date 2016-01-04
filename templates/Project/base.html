@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Bozzuto Bonus</title>
+    </head>
+    <body>
+        <div>
+            <h5><a href="{% url 'user_access:logout' %}" >Log-Out</a></h5>
+            <h1>Bozzuto Bonus Form</h1>
+        </div>
+        <div id="content">
+            {% block content %}{% endblock %}
+        </div>
+    </body>
+</html>
