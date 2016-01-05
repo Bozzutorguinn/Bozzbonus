@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^property/', include('property.urls', namespace="property")),
     url(r'^user_access/', include('user_access.urls', namespace="user_access")),
+    url(r'^submittal/', include('submittal.urls', namespace="submittal")),
 ]
