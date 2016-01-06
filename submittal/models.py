@@ -16,20 +16,20 @@ class Submittal(models.Model):
     #indicates whether the bonus has been submitted to payroll for processing after RM approval
     #in typical usage, should automatically be marked as submitted once the scheduled submittal process runs
     payroll_submitted = models.IntegerField(default=0)
-    occupancy_rate = models.DecimalField(max_digits=4,decimal_places=1)
+    occupancy_rate = models.DecimalField(max_digits=4,decimal_places=1, null=True)
     #options are leaseup and stabilized
     #pre_leasing for the application bonus will be determined based on applications submitted prior to the date
     #of the first move-in
-    leasing_status = models.CharField(default='stabilized', max_length=20)
-    op_rev_month_budget = models.DecimalField(max_digits=12, decimal_places=2)
-    op_rev_month_actual = models.DecimalField(max_digits=12, decimal_places=2)
-    noi_semi_ann_budget = models.DecimalField(max_digits=12, decimal_places=2)
-    noi_semi_ann_actual = models.DecimalField(max_digits=12, decimal_places=2)
-    op_rev_qtr_budget = models.DecimalField(max_digits=12, decimal_places=2)
-    op_rev_qtr_actual = models.DecimalField(max_digits=12, decimal_places=2)
+    leasing_status = models.CharField(max_length=20, null=True)
+    op_rev_month_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    op_rev_month_actual = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    noi_semi_ann_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    noi_semi_ann_actual = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    op_rev_qtr_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    op_rev_qtr_actual = models.DecimalField(max_digits=12, decimal_places=2, null=True)
     #boolean 0/1 field; 0 is no override bonus and 1 is that that bonus is approved
     lease_up_override = models.IntegerField(default=0)
-    delinquency_rate = models.DecimalField(max_digits=4, decimal_places=1)
+    delinquency_rate = models.DecimalField(max_digits=4, decimal_places=1, null=True)
     #boolean 0/1 field; 0 is that there were no bad debt write-offs and 1 is that there were
     bad_debt_writeoffs = models.IntegerField(default=0)
     #this is a check to confirm whether all necessary information for the submittal has been entered

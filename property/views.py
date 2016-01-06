@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .models import Property
 from submittal.models import Submittal
+from user_access.tools import CheckAuthorization
 
 @login_required
 def PropertyIndex(request):
@@ -12,13 +13,13 @@ def PropertyIndex(request):
 
 @login_required
 def PropertyDetail(request, property_id):
-    user_id = request.user
     property = Property.objects.get(id=property_id)
-    user = property.rm_user
-    if user.id == user_id.id:
+    authorized_user = CheckAuthorization(request, property_id)
+    if authorized_user == True:
         open_submittals = Submittal.objects.filter(prop=property_id, pm_submitted=0)
-        context = {'open_submittals': open_submittals, 'property': property}
+        submitted_submittals = Submittal.objects.filter(prop=property_id, pm_submitted=1)
+        context = {'open_submittals': open_submittals,
+                   'submitted_submittals': submitted_submittals,
+                   'property': property,
+                   }
         return render(request, 'property/property_submittals.html', context)
-    else:
-        #re-direct the user to a listing of the properties that they do have access to
-        return PropertyIndex(request)

@@ -2,9 +2,19 @@
 
 {% block content %}
 
-<p>{{ property.prop_name }} Open Submittals</p>
+<p>{{ property.prop_name }}</p>
+
+<p>Open Submittals</p>
 <table>
     {% for submittal in open_submittals.all %}
+    <tr>
+        <td><a href="{% url 'submittal:submittal_detail' submittal.id %}">{{ submittal.submittal_month }}/{{ submittal.submittal_year }}</a></td>
+    </tr>
+    {% endfor %}
+</table>
+<p>Submitted</p>
+<table>
+    {% for submittal in submitted_submittals.all %}
     <tr>
         <td><a href="{% url 'submittal:submittal_detail' submittal.id %}">{{ submittal.submittal_month }}/{{ submittal.submittal_year }}</a></td>
     </tr>
