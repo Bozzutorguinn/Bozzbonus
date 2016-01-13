@@ -38,7 +38,36 @@ class EnterStabilizationDateForm(forms.Form):
         required=True,
         label='Month'
     )
-    stabilization_year = forms.ChoiceField(
+    stabilization_day = forms.ChoiceField(
+        choices=(),
+        required=True,
+        label='Day'
+    )
+
+
+class EnterOpeningDateForm(forms.Form):
+    def __init__(self,
+                 year_choices,
+                 month_choices,
+                 day_choices,
+                 *args,
+                 **kwargs):
+        super(EnterOpeningDateForm, self).__init__(*args, **kwargs)
+        self.fields['opening_year'].choices = year_choices
+        self.fields['opening_month'].choices = month_choices
+        self.fields['opening_day'].choices = day_choices
+
+    opening_year = forms.ChoiceField(
+        choices=(),
+        required=True,
+        label='Year'
+    )
+    opening_month = forms.ChoiceField(
+        choices=(),
+        required=True,
+        label='Month'
+    )
+    opening_day = forms.ChoiceField(
         choices=(),
         required=True,
         label='Day'

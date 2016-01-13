@@ -1,0 +1,17 @@
+{% extends 'Project/base.html' %}
+
+{% block content %}
+
+<p>Property: {{ property.prop_name }}</p>
+<p>Submittal: {{ submittal.submittal_month }}/{{ submittal.submittal_year }}</p>
+<p>Edit Stabilization Date</p>
+
+<form action="{% url 'submittal:edit_stabilization_date' submittal.id %}" method="post">
+    {% csrf_token %}
+    <table>
+        {{ form.as_table }}
+    </table>
+    <input type="submit" value="Save Stabilization Date" />
+</form>
+
+{% endblock %}

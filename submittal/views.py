@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from property.models import Property
 from .models import Submittal
-from .forms import EditLeasingStatusForm, EnterStabilizationDateForm
+from .forms import EditLeasingStatusForm, EnterStabilizationDateForm, EnterOpeningDateForm
 from user_access.tools import CheckAuthorization
 import datetime
 
@@ -17,6 +17,11 @@ def SubmittalDetail(request, submittal_id):
     if authorized_user == True:
         #check the submittal status to see whether or not the user can edit the numbers
         submittal_status = CheckSubmissionStatus(submittal_id=submittal_id)
+        #check that the property has enetered an opening date
+        open_date_complete = CheckOpeningDate(property_id=property_id)
+        #check that a stabilization date has been entered if the property is listed as stabilized
+        stabilization_date_complete = CheckStabilizationDate(submittal_id=submittal_id)
+        print stabilization_date_complete
         #convert the boolean 0/1 for lease-up override to 'yes' or 'no'
         lease_up_override = 'No'
         if submittal.lease_up_override == 1:
@@ -36,6 +41,8 @@ def SubmittalDetail(request, submittal_id):
                    'bad_debt_writeoff': bad_debt_writeoff,
                    'leasing_status_confirmed': leasing_status_confirmed,
                    'submittal_status': submittal_status,
+                   'open_date_complete': open_date_complete,
+                   'stabilization_date_complete': stabilization_date_complete,
                    }
         return render(request, 'submittal/submittal_detail.html', context)
 
@@ -58,7 +65,7 @@ def EditLeasingStatus(request, submittal_id):
                 #check to make sure that they are not changing status from stabilized to leaseup
                 prior_period = PriorMonthSubmittalDates(submittal_id=submittal_id)
                 prior_year = prior_period['prior_year']
-                prior_month = prior_month['prior_month']
+                prior_month = prior_period['prior_month']
                 submittal_prior_month = Submittal.objects.filter(prop_id=property_id,
                                                                  submittal_year=prior_year,
                                                                  submittal_month=prior_month)
@@ -121,19 +128,88 @@ def EditStabilizationDate(request, submittal_id):
                 month = data['stabilization_month']
                 day = data['stabilization_day']
                 date_check = CheckDates(year=year, month=month, day=day)
-                if date_check == True:
-                    stabilization_date = datetime.date(year=year, month=month, day=day)
+                stabilization_date_check = StabilizationOpeningDateCheck(property_id=property_id,
+                                                                         stabilization_year=year,
+                                                                         stabilization_month=month,
+                                                                         stabilization_day=day)
+                if (date_check == True) and (stabilization_date_check == True):
+                    stabilization_date = datetime.date(year=int(year), month=int(month), day=int(day))
                     property.date_stabilization = stabilization_date
                     property.save()
                     return HttpResponseRedirect(reverse('submittal:submittal_detail', kwargs={'submittal_id': submittal_id}))
+                else:
+                    message = 'The designated stabilization date is either incorrect or falls before the stabilization date. Try again.'
+                    context = {
+                        'form': form,
+                        'property': property,
+                        'submittal': submittal,
+                        'message': message,
+                    }
+                    return render(request, 'submittal/edit_stabilization_date.html', context)
         else:
             form = EnterStabilizationDateForm(
                 year_choices=date_choices['year_choices'],
                 month_choices=date_choices['month_choices'],
                 day_choices=date_choices['day_choices'],
             )
-        return render(request, 'submittal/edit_stabilization_date.html', {'form': form})
+            context = {
+                'form': form,
+                'property': property,
+                'submittal': submittal,
+            }
+        return render(request, 'submittal/edit_stabilization_date.html', context)
 
+@login_required
+def EditOpeningDate(request, submittal_id):
+    submittal = Submittal.objects.get(id=submittal_id)
+    property_id = submittal.prop_id
+    property = Property.objects.get(id=property_id)
+    date_choices = DateChoices()
+    authorized_user = CheckAuthorization(request, property_id)
+    if authorized_user == True:
+        if request.method == 'POST':
+            form = EnterOpeningDateForm(
+                data=request.POST,
+                year_choices=date_choices['year_choices'],
+                month_choices=date_choices['month_choices'],
+                day_choices=date_choices['day_choices']
+            )
+            if form.is_valid():
+                data = form.cleaned_data
+                year = data['opening_year']
+                month = data['opening_month']
+                day = data['opening_day']
+                date_check = CheckDates(year=year, month=month, day=day)
+                opening_date_check = OpeningStabilizationDateCheck(property_id=property_id,
+                                                                         opening_year=year,
+                                                                         opening_month=month,
+                                                                         opening_day=day)
+                if date_check == True and opening_date_check == True:
+                    opening_date = datetime.date(year=int(year), month=int(month), day=int(day))
+                    property.date_opening = opening_date
+                    property.save()
+                    return HttpResponseRedirect(reverse('submittal:submittal_detail', kwargs={'submittal_id': submittal_id}))
+                else:
+                    message = 'The designated opening date is either incorrect or falls after the stabilization date. Try again.'
+                    context = {
+                        'form': form,
+                        'property': property,
+                        'submittal': submittal,
+                        'message': message,
+                    }
+                    return render(request, 'submittal/edit_opening_date.html', context)
+        else:
+            form = EnterOpeningDateForm(
+                year_choices=date_choices['year_choices'],
+                month_choices=date_choices['month_choices'],
+                day_choices=date_choices['day_choices'],
+            )
+            context = {
+                'form': form,
+                'property': property,
+                'submittal': submittal,
+            }
+        return render(request, 'submittal/edit_opening_date.html', context)
 
 def LeasingStatusOptions():
     options = []
@@ -148,6 +224,61 @@ def CheckSubmissionStatus(submittal_id):
     if submittal_status_boolean == 1:
         submittal_status = 'submitted'
     return submittal_status
+
+def CheckOpeningDate(property_id):
+    property = Property.objects.get(id=property_id)
+    opening_date = property.date_opening
+    #in case the database returns an empty value, set the opening date to a dummy date
+    if not opening_date or opening_date == None or opening_date == 'null' or opening_date == '':
+        opening_date = datetime.date(year=1900, month=1, day=1)
+    minimum_date = datetime.date(year=2010, month=1, day=1)
+    opening_date_complete = 'incomplete'
+    if opening_date >= minimum_date:
+        opening_date_complete = 'complete'
+    return opening_date_complete
+
+def StabilizationOpeningDateCheck(property_id, stabilization_year, stabilization_month, stabilization_day):
+    stabilization_date = datetime.date(year=int(stabilization_year),
+                                       month=int(stabilization_month),
+                                       day=int(stabilization_day)
+                                       )
+    stabilization_date_check = False
+    property = Property.objects.get(id=property_id)
+    opening_date = property.date_opening
+    if stabilization_date > opening_date:
+        stabilization_date_check = True
+    return stabilization_date_check
+
+def OpeningStabilizationDateCheck(property_id, opening_year, opening_month, opening_day):
+    opening_date = datetime.date(year=int(opening_year),
+                                       month=int(opening_month),
+                                       day=int(opening_day)
+                                       )
+    opening_date_check = False
+    property = Property.objects.get(id=property_id)
+    stabilization_date = property.date_stabilization
+    if not stabilization_date or stabilization_date == '' or stabilization_date == None or stabilization_date == 'null':
+        opening_date_check = True
+    elif stabilization_date > opening_date:
+            opening_date_check = True
+    return opening_date_check
+
+def CheckStabilizationDate(submittal_id):
+    submittal = Submittal.objects.get(id=submittal_id)
+    property_id = submittal.prop_id
+    property = Property.objects.get(id=property_id)
+    stabilization_date = property.date_stabilization
+    leasing_status = submittal.leasing_status
+    stabilization_date_complete = 'incomplete'
+    if leasing_status == 'stabilized':
+        minimum_date = datetime.date(year=2010, month=1, day=1)
+        if stabilization_date <> None:
+            if stabilization_date >= minimum_date:
+                stabilization_date_complete = 'complete'
+    elif leasing_status == 'leaseup':
+        stabilization_date_complete = 'complete'
+    return stabilization_date_complete
+
 
 def PriorMonthSubmittalDates(submittal_id):
     submittal = Submittal.objects.get(id=submittal_id)
@@ -169,19 +300,19 @@ def PriorMonthSubmittalDates(submittal_id):
 
 def DateYearChoices():
     year_choices = []
-    for i in range(start=2010, stop=2099, step=1):
+    for i in range(2010, 2100, 1):
         year_choices.append((i, i),)
     return year_choices
 
 def DateMonthChoices():
     month_choices = []
-    for i in range(start=1, stop=12, step=1):
+    for i in range(1, 13, 1):
         month_choices.append((i, i),)
     return month_choices
 
 def DateDayChoices():
     day_choices = []
-    for i in range(start=1, stop=31, step=1):
+    for i in range(1, 32, 1):
         day_choices.append((i, i),)
     return  day_choices
 
@@ -201,7 +332,7 @@ def CheckDates(year, month, day):
     leap_year = False
     delta_year = 0
     if year > 2008:
-        delta_year = year - 2008
+        delta_year = int(year) - 2008
         if (delta_year % 4 == 0):
             leap_year = True
     if month == 2:
@@ -215,7 +346,7 @@ def CheckDates(year, month, day):
         if day > 30:
             dates_okay = False
     current_date = datetime.date.today()
-    entered_date = datetime.date(year=year, month=month, day=day)
+    entered_date = datetime.date(year=int(year), month=int(month), day=int(day))
     if entered_date > current_date:
         dates_okay = False
     return dates_okay

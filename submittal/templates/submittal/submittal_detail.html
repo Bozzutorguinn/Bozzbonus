@@ -16,98 +16,103 @@
     {% if leasing_status_confirmed == 'Yes' %}
         <tr>
             <td>Opening Date: </td>
-            <td></td>
-            <td>Edit</td>
+            <td>{{ property.date_opening }}</td>
+            <td><a href="{% url 'submittal:edit_opening_date' submittal.id %}">Edit</a></td>
         </tr>
-        <tr>
-            <td>Stabilization Date:</td>
-            <td>{{ property.date_stabilization }}</td>
-        </tr>
-        <tr>
-            <td>Occupancy Rate (%):</td>
-            <td>{{ submittal.occupancy_rate }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+        {% if open_date_complete == 'complete' %}
+            <tr>
+                <td>Stabilization Date:</td>
+                <td>{{ property.date_stabilization }}</td>
+                <td><a href="{% url 'submittal:edit_stabilization_date' submittal.id %}">Edit</a></td>
+            </tr>
+            {% if stabilization_date_complete == 'complete' %}
+                <tr>
+                    <td>Occupancy Rate (%):</td>
+                    <td>{{ submittal.occupancy_rate }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_stabilization_date' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
+                <tr><td>---</td></tr>
+                <tr>
+                    <td>Operating Revenue (Monthly):</td>
+                </tr>
+                <tr>
+                    <td>Budget ($):</td>
+                    <td>{{ submittal.op_rev_month_budget }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
+                <tr>
+                    <td>Actual ($):</td>
+                    <td>{{ submittal.op_rev_month_actual }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
+                <tr><td>---</td></tr>
+                <tr>
+                    <td>Net Operating Income (Semi-Annual)</td>
+                </tr>
+                <tr>
+                    <td>Budget ($):</td>
+                    <td>{{ submittal.noi_semi_ann_budget }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
+                <tr>
+                    <td>Actual ($):</td>
+                    <td>{{ submittal.noi_semi_ann_actual }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
+                <tr><td>---</td></tr>
+                <tr>
+                    <td>Total Operating Revenue (Quarter-End)</td>
+                </tr>
+                <tr>
+                    <td>Budget ($):</td>
+                    <td>{{ submittal.op_rev_qtr_budget }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
+                <tr>
+                    <td>Actual ($):</td>
+                    <td>{{ submittal.op_rev_qtr_actual }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
+                <tr><td>---</td></tr>
+                <tr>
+                    <td>Delinquency Rate:</td>
+                    <td>{{ delinquency.delinquency_rate }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
+                <tr><td>---</td></tr>
+                <tr>
+                    <td>Bad Debt Write-Offs</td>
+                    <td>{{ bad_debt_writeoff }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
+                <tr><td>---</td></tr>
+                <tr>
+                    <td>Lease-Up Override Bonus:</td>
+                    <td>{{ lease_up_override }}</td>
+                    {% if submittal_status == 'open' %}
+                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                    {% endif %}
+                </tr>
             {% endif %}
-        </tr>
-        <tr><td>---</td></tr>
-        <tr>
-            <td>Operating Revenue (Monthly):</td>
-        </tr>
-        <tr>
-            <td>Budget ($):</td>
-            <td>{{ submittal.op_rev_month_budget }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-            {% endif %}
-        </tr>
-        <tr>
-            <td>Actual ($):</td>
-            <td>{{ submittal.op_rev_month_actual }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-            {% endif %}
-        </tr>
-        <tr><td>---</td></tr>
-        <tr>
-            <td>Net Operating Income (Semi-Annual)</td>
-        </tr>
-        <tr>
-            <td>Budget ($):</td>
-            <td>{{ submittal.noi_semi_ann_budget }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-            {% endif %}
-        </tr>
-        <tr>
-            <td>Actual ($):</td>
-            <td>{{ submittal.noi_semi_ann_actual }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-            {% endif %}
-        </tr>
-        <tr><td>---</td></tr>
-        <tr>
-            <td>Total Operating Revenue (Quarter-End)</td>
-        </tr>
-        <tr>
-            <td>Budget ($):</td>
-            <td>{{ submittal.op_rev_qtr_budget }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-            {% endif %}
-        </tr>
-        <tr>
-            <td>Actual ($):</td>
-            <td>{{ submittal.op_rev_qtr_actual }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-            {% endif %}
-        </tr>
-        <tr><td>---</td></tr>
-        <tr>
-            <td>Delinquency Rate:</td>
-            <td>{{ delinquency.delinquency_rate }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-            {% endif %}
-        </tr>
-        <tr><td>---</td></tr>
-        <tr>
-            <td>Bad Debt Write-Offs</td>
-            <td>{{ bad_debt_writeoff }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-            {% endif %}
-        </tr>
-        <tr><td>---</td></tr>
-        <tr>
-            <td>Lease-Up Override Bonus:</td>
-            <td>{{ lease_up_override }}</td>
-            {% if submittal_status == 'open' %}
-                <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-            {% endif %}
-        </tr>
+        {% endif %}
     {% endif %}
 </table>
 

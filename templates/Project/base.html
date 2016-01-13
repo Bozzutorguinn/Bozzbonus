@@ -6,7 +6,10 @@
     <body>
         <div>
             <h5><a href="{% url 'user_access:logout' %}" >Log-Out</a></h5>
-            <h1>Bozzuto Bonus Form</h1>
+            <h1><a href="{% url 'property:index' %}">Bozzuto Bonus Form</a></h1>
+            {% ifnotequal message '' %}
+                <p style="color:red;">{{ message }}</p>
+            {% endifnotequal %}
         </div>
         <div id="content">
             {% block content %}{% endblock %}
