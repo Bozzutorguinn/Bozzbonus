@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<p>Property: {{ property.prop_name }}</p>
+<p>Property: <a href="{% url 'property:property_detail' property.id %}">{{ property.prop_name }}</a></p>
 <p>Submittal: {{ submittal.submittal_month }}/{{ submittal.submittal_year }}</p>
 <table>
     <tr>
@@ -51,42 +51,46 @@
                         <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
                     {% endif %}
                 </tr>
-                <tr><td>---</td></tr>
-                <tr>
-                    <td>Net Operating Income (Semi-Annual)</td>
-                </tr>
-                <tr>
-                    <td>Budget ($):</td>
-                    <td>{{ submittal.noi_semi_ann_budget }}</td>
-                    {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-                    {% endif %}
-                </tr>
-                <tr>
-                    <td>Actual ($):</td>
-                    <td>{{ submittal.noi_semi_ann_actual }}</td>
-                    {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-                    {% endif %}
-                </tr>
-                <tr><td>---</td></tr>
-                <tr>
-                    <td>Total Operating Revenue (Quarter-End)</td>
-                </tr>
-                <tr>
-                    <td>Budget ($):</td>
-                    <td>{{ submittal.op_rev_qtr_budget }}</td>
-                    {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-                    {% endif %}
-                </tr>
-                <tr>
-                    <td>Actual ($):</td>
-                    <td>{{ submittal.op_rev_qtr_actual }}</td>
-                    {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
-                    {% endif %}
-                </tr>
+                {% if fiscal_half_end == 'Yes' %}
+                    <tr><td>---</td></tr>
+                    <tr>
+                        <td>Net Operating Income (Semi-Annual)</td>
+                    </tr>
+                    <tr>
+                        <td>Budget ($):</td>
+                        <td>{{ submittal.noi_semi_ann_budget }}</td>
+                        {% if submittal_status == 'open' %}
+                            <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td>Actual ($):</td>
+                        <td>{{ submittal.noi_semi_ann_actual }}</td>
+                        {% if submittal_status == 'open' %}
+                            <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                        {% endif %}
+                    </tr>
+                {% endif %}
+                {% if fiscal_qtr_end == 'Yes' %}
+                    <tr><td>---</td></tr>
+                    <tr>
+                        <td>Total Operating Revenue (Quarter-End)</td>
+                    </tr>
+                    <tr>
+                        <td>Budget ($):</td>
+                        <td>{{ submittal.op_rev_qtr_budget }}</td>
+                        {% if submittal_status == 'open' %}
+                            <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td>Actual ($):</td>
+                        <td>{{ submittal.op_rev_qtr_actual }}</td>
+                        {% if submittal_status == 'open' %}
+                            <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                        {% endif %}
+                    </tr>
+                {% endif %}
                 <tr><td>---</td></tr>
                 <tr>
                     <td>Delinquency Rate:</td>
@@ -115,5 +119,9 @@
         {% endif %}
     {% endif %}
 </table>
+
+{% if data_points_complete == complete %}
+    <p>Submit</p>
+{% endif %}
 
 {% endblock %}

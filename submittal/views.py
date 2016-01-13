@@ -21,7 +21,6 @@ def SubmittalDetail(request, submittal_id):
         open_date_complete = CheckOpeningDate(property_id=property_id)
         #check that a stabilization date has been entered if the property is listed as stabilized
         stabilization_date_complete = CheckStabilizationDate(submittal_id=submittal_id)
-        print stabilization_date_complete
         #convert the boolean 0/1 for lease-up override to 'yes' or 'no'
         lease_up_override = 'No'
         if submittal.lease_up_override == 1:
@@ -35,6 +34,33 @@ def SubmittalDetail(request, submittal_id):
         if submittal.leasing_status == 'stabilized' or submittal.leasing_status == 'leaseup':
             leasing_status_confirmed = 'Yes'
         #check whether or not all of the open data points has been filled out to allow for bonuses to be calculated
+        data_points_complete = CheckDataPoints(submittal_id=submittal_id)
+        if data_points_complete == 'complete' and submittal.data_complete == 0:
+            submittal.data_complete = 1
+            submittal.save()
+        if data_points_complete == 'incomplete' and submittal.data_complete == 1:
+            submittal.data_complete = 0
+            submittal.save()
+        #check whether or not it is a fiscal half end
+        fiscal_halfs = ConvertFiscalHalfs(property.fiscal_start)
+        half_1 = fiscal_halfs['half_1']
+        half_2 = fiscal_halfs['half_2']
+        fiscal_qtrs = ConvertFiscalQuarters(property.fiscal_start)
+        qtr_1 = fiscal_qtrs['qtr_1']
+        qtr_2 = fiscal_qtrs['qtr_2']
+        qtr_3 = fiscal_qtrs['qtr_3']
+        qtr_4 = fiscal_qtrs['qtr_4']
+        fiscal_half_end = 'No'
+        fiscal_qtr_end = 'No'
+        checkleaseupfiscalhalf = CheckFiscalHalfLeaseup(property_id=property_id)
+        if submittal.leasing_status == 'stabilized':
+            if submittal.submittal_month == half_1 or submittal.submittal_month == half_2:
+                fiscal_half_end = 'Yes'
+                if checkleaseupfiscalhalf == True:
+                    fiscal_qtr_end = 'Yes'
+        if submittal.leasing_status == 'leaseup':
+            if submittal.submittal_month == qtr_1 or submittal.submittal_month == qtr_2 or submittal.submittal_month == qtr_3 or submittal.submittal_month == qtr_4:
+                fiscal_qtr_end = 'Yes'
         context = {'submittal': submittal,
                    'property': property,
                    'lease_up_override': lease_up_override,
@@ -43,6 +69,9 @@ def SubmittalDetail(request, submittal_id):
                    'submittal_status': submittal_status,
                    'open_date_complete': open_date_complete,
                    'stabilization_date_complete': stabilization_date_complete,
+                   'data_points_complete': data_points_complete,
+                   'fiscal_half_end': fiscal_half_end,
+                   'fiscal_qtr_end': fiscal_qtr_end,
                    }
         return render(request, 'submittal/submittal_detail.html', context)
 
@@ -350,3 +379,97 @@ def CheckDates(year, month, day):
     if entered_date > current_date:
         dates_okay = False
     return dates_okay
+
+def CheckDataPoints(submittal_id):
+    submittal = Submittal.objects.get(id=submittal_id)
+    property_id = submittal.prop_id
+    property = Property.objects.get(id=property_id)
+    data_points_complete = 'complete'
+    if not submittal.occupancy_rate or submittal.occupancy_rate == '' or submittal.occupancy_rate == None or submittal.occupancy_rate == 'null':
+        data_points_complete = 'incomplete'
+    if not submittal.op_rev_month_actual or submittal.op_rev_month_actual == '' or submittal.op_rev_month_actual == None or submittal.op_rev_month_actual == 'null':
+        data_points_complete = 'incomplete'
+    if not submittal.op_rev_month_budget or submittal.op_rev_month_budget == '' or submittal.op_rev_month_budget == None or submittal.op_rev_month_budget == 'null':
+        data_points_complete = 'incomplete'
+    if not submittal.delinquency_rate or submittal.delinquency_rate == '' or submittal.delinquency_rate == None or submittal.delinquency_rate == 'null':
+        data_points_complete = 'incomplete'
+    if not submittal.bad_debt_writeoffs or submittal.bad_debt_writeoffs == '' or submittal.bad_debt_writeoffs == None or submittal.bad_debt_writeoffs == 'null':
+        data_points_complete = 'incomplete'
+    if not submittal.lease_up_override or submittal.lease_up_override == '' or submittal.lease_up_override == None or submittal.lease_up_override == 'null':
+        data_points_complete = 'incomplete'
+    fiscal_year_start_month = property.fiscal_start
+    fiscal_halfs = ConvertFiscalHalfs(fiscal_year_start_month)
+    half_1 = fiscal_halfs['half_1']
+    half_2 = fiscal_halfs['half_2']
+    if submittal.leasing_status == 'stabilized':
+        if submittal.submittal_month == half_1 or submittal.submittal_month == half_2:
+            if not submittal.noi_semi_ann_actual or submittal.noi_semi_ann_actual == '' or submittal.noi_semi_ann_actual == None or submittal.noi_semi_ann_actual == 'null':
+                data_points_complete = 'incomplete'
+            if not submittal.noi_semi_ann_budget or submittal.noi_semi_ann_budget == '' or submittal.noi_semi_ann_budget == None or submittal.noi_semi_ann_budget == 'null':
+                data_points_complete = 'incomplete'
+        #check whether or not the property has been in leaseup in the last 6 months
+            leaseup_fiscal_half_check = CheckFiscalHalfLeaseup(property_id=property_id)
+            if leaseup_fiscal_half_check == True:
+                if not submittal.op_rev_qtr_actual or submittal.op_rev_qtr_actual == '' or submittal.op_rev_qtr_actual == None or submittal.op_rev_qtr_actual == 'null':
+                    data_points_complete = 'incomplete'
+                if not submittal.op_rev_qtr_budget or submittal.op_rev_qtr_budget == '' or submittal.op_rev_qtr_budget == None or submittal.op_rev_qtr_budget == 'null':
+                    data_points_complete = 'incomplete'
+    fiscal_quarters = ConvertFiscalQuarters(fiscal_year_start_month)
+    qtr_1 = fiscal_quarters['qtr_1']
+    qtr_2 = fiscal_quarters['qtr_2']
+    qtr_3 = fiscal_quarters['qtr_3']
+    qtr_4 = fiscal_quarters['qtr_4']
+    if submittal.leasing_status == 'leaseup':
+        if submittal.submittal_month == qtr_1 or submittal.submittal_month == qtr_2 or submittal.submittal_month == qtr_3 or submittal.submittal_month == qtr_4:
+            if not submittal.op_rev_qtr_actual or submittal.op_rev_qtr_actual == '' or submittal.op_rev_qtr_actual == None or submittal.op_rev_qtr_actual == 'null':
+                    data_points_complete = 'incomplete'
+            if not submittal.op_rev_qtr_budget or submittal.op_rev_qtr_budget == '' or submittal.op_rev_qtr_budget == None or submittal.op_rev_qtr_budget == 'null':
+                    data_points_complete = 'incomplete'
+    return data_points_complete
+
+def ConvertFiscalHalfs(fiscal_year_start_month):
+    half_1 = fiscal_year_start_month + 5
+    half_2 = fiscal_year_start_month + 11
+    if half_1 > 12:
+        half_1 = half_1 - 12
+    if half_2 > 12:
+        half_2 = half_2 - 12
+    fiscal_halfs = {
+        'half_1': half_1,
+        'half_2': half_2,
+    }
+    return fiscal_halfs
+
+def ConvertFiscalQuarters(fiscal_year_start_month):
+    qtr_1 = fiscal_year_start_month + 2
+    qtr_2 = fiscal_year_start_month + 5
+    qtr_3 = fiscal_year_start_month + 8
+    qtr_4 = fiscal_year_start_month + 11
+    if qtr_1 > 12:
+        qtr_1 = qtr_1 - 12
+    if qtr_2 > 12:
+        qtr_2 = qtr_2 - 12
+    if qtr_3 > 12:
+        qtr_3 = qtr_3 - 12
+    if qtr_4 > 12:
+        qtr_4 = qtr_4 - 12
+    fiscal_quarters = {
+        'qtr_1': qtr_1,
+        'qtr_2': qtr_2,
+        'qtr_3': qtr_3,
+        'qtr_4': qtr_4,
+    }
+    return fiscal_quarters
+
+#purpose of this method is to check whether or not the property has been in leaseup within last 6 months
+#thus requiring that the quarterly total operating revenue be entered
+def CheckFiscalHalfLeaseup(property_id):
+    submittals = Submittal.objects.filter(prop_id = property_id).order_by('-submittal_year', '-submittal_month')
+    leaseup_check = False
+    loop_count = 0
+    for i, submittal in enumerate(submittals):
+        if i < 6 and i > 0:
+            if submittal.leasing_status == 'leaseup':
+                leaseup_check = True
+        loop_count = loop_count + 1
+    return leaseup_check
