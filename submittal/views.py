@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from property.models import Property
 from .models import Submittal
-from .forms import EditLeasingStatusForm, EnterStabilizationDateForm, EnterOpeningDateForm
+from .forms import EditLeasingStatusForm, EnterStabilizationDateForm, EnterOpeningDateForm, EditRateForm, EditDollarInputForm, EditQuantityForm, EditYesNoForm
 from user_access.tools import CheckAuthorization
 import datetime
 
@@ -41,6 +41,7 @@ def SubmittalDetail(request, submittal_id):
         if data_points_complete == 'incomplete' and submittal.data_complete == 1:
             submittal.data_complete = 0
             submittal.save()
+        print data_points_complete
         #check whether or not it is a fiscal half end
         fiscal_halfs = ConvertFiscalHalfs(property.fiscal_start)
         half_1 = fiscal_halfs['half_1']
@@ -240,6 +241,150 @@ def EditOpeningDate(request, submittal_id):
             }
         return render(request, 'submittal/edit_opening_date.html', context)
 
+@login_required
+def EditRate(request, submittal_id, rate_type):
+    submittal = Submittal.objects.get(id=submittal_id)
+    property_id = submittal.prop_id
+    property = Property.objects.get(id=property_id)
+    authorized_user = CheckAuthorization(request, property_id)
+    input_form_title_options = {
+        'occupancy_rate': OccupancyRateName,
+        'delinquency_rate': DelinquencyRateName,
+    }
+    input_form_title = input_form_title_options[rate_type]()
+    input_type = rate_type
+    rate_choices = PercentRateChoice()
+    if authorized_user == True:
+        if request.method == 'POST':
+            form = EditRateForm(
+                data=request.POST,
+                rate_choices=rate_choices,
+            )
+            if form.is_valid():
+                data = form.cleaned_data
+                amount = data['rate_amount']
+                if input_type == 'occupancy_rate':
+                    submittal.occupancy_rate = amount
+                if input_type == 'delinquency_rate':
+                    submittal.delinquency_rate = amount
+                submittal.save()
+                return HttpResponseRedirect(reverse('submittal:submittal_detail', kwargs={'submittal_id': submittal_id}))
+            else:
+                message = 'The entered percentage rate caused an error, please try again.  Enter as XXX.XX without any % sign.'
+                context = {
+                    'form': form,
+                    'property': property,
+                    'submittal': submittal,
+                    'message': message,
+                    'input_form_title': input_form_title,
+                    'input_type': input_type
+                }
+                return render(request, 'submittal/edit_rate_form.html', context)
+        else:
+            form = EditRateForm(
+                rate_choices=rate_choices,
+            )
+            context = {
+                'form': form,
+                'property': property,
+                'submittal': submittal,
+                'input_form_title': input_form_title,
+                'input_type': input_type
+            }
+        return render(request, 'submittal/edit_rate_form.html', context)
+
+@login_required
+def EditDollarAmount(request, submittal_id, dollar_input_type):
+    submittal = Submittal.objects.get(id=submittal_id)
+    property_id = submittal.prop_id
+    property = Property.objects.get(id=property_id)
+    authorized_user = CheckAuthorization(request, property_id)
+    input_form_title_options = {
+        'op_rev_month_budget': OpRevMonthBudgetName,
+        'op_rev_month_actual': OpRevMonthActualName,
+        'op_rev_qtr_budget': OpRevQtrBudgetName,
+        'op_rev_qtr_actual': OpRevQtrActualName,
+        'noi_semi_ann_budget': NoiSemiAnnBudgetName,
+        'noi_semi_ann_actual': NoiSemiAnnActualName,
+    }
+    input_form_title = input_form_title_options[dollar_input_type]()
+    input_type = dollar_input_type
+    if authorized_user == True:
+        if request.method == 'POST':
+            form = EditDollarInputForm(
+                data=request.POST
+            )
+            if form.is_valid():
+                data = form.cleaned_data
+                amount = data['dollar_amount']
+                if dollar_input_type == 'op_rev_month_budget':
+                    submittal.op_rev_month_budget = amount
+                if dollar_input_type == 'op_rev_month_actual':
+                    submittal.op_rev_month_actual = amount
+                if dollar_input_type == 'op_rev_qtr_budget':
+                    submittal.op_rev_qtr_budget = amount
+                if dollar_input_type == 'op_rev_qtr_actual':
+                    submittal.op_rev_qtr_actual = amount
+                if dollar_input_type == 'noi_semi_ann_budget':
+                    submittal.noi_semi_ann_budget = amount
+                if dollar_input_type == 'noi_semi_ann_actual':
+                    submittal.noi_semi_ann_actual = amount
+                submittal.save()
+                return HttpResponseRedirect(reverse('submittal:submittal_detail', kwargs={'submittal_id': submittal_id}))
+            else:
+                message = 'The entered dollar amount caused an error, please try again.  Enter as XXX.XX without any $ sign.'
+                context = {
+                    'form': form,
+                    'property': property,
+                    'submittal': submittal,
+                    'message': message,
+                    'input_form_title': input_form_title,
+                    'input_type': input_type
+                }
+                return render(request, 'submittal/edit_input_form.html', context)
+        else:
+            form = EditDollarInputForm()
+            context = {
+                'form': form,
+                'property': property,
+                'submittal': submittal,
+                'input_form_title': input_form_title,
+                'input_type': input_type
+            }
+        return render(request, 'submittal/edit_input_form.html', context)
+
+@login_required
+def EditQuantityAmount(request, submittal_id, quantity_input_type):
+    pass
+
+@login_required
+def EditYesNo(request, submittal_id, yes_no_type):
+    pass
+
+def OpRevMonthBudgetName():
+    return 'Total Operating Revenue - Monthly: Budgeted Amount'
+
+def OpRevMonthActualName():
+    return 'Total Operating Revenue - Monthly: Actual Amount'
+
+def OpRevQtrBudgetName():
+    return 'Total Operating Revenue - Quarterly: Budgeted Amount'
+
+def OpRevQtrActualName():
+    return 'Total Operating Revenue - Quarterly: Actual Amount'
+
+def NoiSemiAnnBudgetName():
+    return 'NOI - Semi-Annual: Budgeted Amount'
+
+def NoiSemiAnnActualName():
+    return 'NOI - Semi-Annual: Actual Amount'
+
+def OccupancyRateName():
+    return 'Occupancy Rate %'
+
+def DelinquencyRateName():
+    return 'Delinquency Rate %'
+
 def LeasingStatusOptions():
     options = []
     options.append(('stabilized', 'stabilized'),)
@@ -393,9 +538,9 @@ def CheckDataPoints(submittal_id):
         data_points_complete = 'incomplete'
     if not submittal.delinquency_rate or submittal.delinquency_rate == '' or submittal.delinquency_rate == None or submittal.delinquency_rate == 'null':
         data_points_complete = 'incomplete'
-    if not submittal.bad_debt_writeoffs or submittal.bad_debt_writeoffs == '' or submittal.bad_debt_writeoffs == None or submittal.bad_debt_writeoffs == 'null':
+    if submittal.bad_debt_writeoffs == '' or submittal.bad_debt_writeoffs == None or submittal.bad_debt_writeoffs == 'null':
         data_points_complete = 'incomplete'
-    if not submittal.lease_up_override or submittal.lease_up_override == '' or submittal.lease_up_override == None or submittal.lease_up_override == 'null':
+    if submittal.lease_up_override == '' or submittal.lease_up_override == None or submittal.lease_up_override == 'null':
         data_points_complete = 'incomplete'
     fiscal_year_start_month = property.fiscal_start
     fiscal_halfs = ConvertFiscalHalfs(fiscal_year_start_month)
@@ -473,3 +618,10 @@ def CheckFiscalHalfLeaseup(property_id):
                 leaseup_check = True
         loop_count = loop_count + 1
     return leaseup_check
+
+def PercentRateChoice():
+    rate_choices = []
+    for i in (0, 1001, 1):
+        n = i / 10
+        rate_choices.append((n,n),)
+    return rate_choices

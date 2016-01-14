@@ -30,7 +30,7 @@
                     <td>Occupancy Rate (%):</td>
                     <td>{{ submittal.occupancy_rate }}</td>
                     {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_stabilization_date' submittal.id %}">Edit</a></td>
+                        <td><a href="{% url 'submittal:edit_rate' submittal.id 'occupancy_rate' %}">Edit</a></td>
                     {% endif %}
                 </tr>
                 <tr><td>---</td></tr>
@@ -41,14 +41,14 @@
                     <td>Budget ($):</td>
                     <td>{{ submittal.op_rev_month_budget }}</td>
                     {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                        <td><a href="{% url 'submittal:edit_dollar_amount' submittal.id 'op_rev_month_budget' %}">Edit</a></td>
                     {% endif %}
                 </tr>
                 <tr>
                     <td>Actual ($):</td>
                     <td>{{ submittal.op_rev_month_actual }}</td>
                     {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                        <td><a href="{% url 'submittal:edit_dollar_amount' submittal.id 'op_rev_month_actual' %}">Edit</a></td>
                     {% endif %}
                 </tr>
                 {% if fiscal_half_end == 'Yes' %}
@@ -60,14 +60,14 @@
                         <td>Budget ($):</td>
                         <td>{{ submittal.noi_semi_ann_budget }}</td>
                         {% if submittal_status == 'open' %}
-                            <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                            <td><a href="{% url 'submittal:edit_dollar_amount' submittal.id 'noi_semi_ann_budget' %}">Edit</a></td>
                         {% endif %}
                     </tr>
                     <tr>
                         <td>Actual ($):</td>
                         <td>{{ submittal.noi_semi_ann_actual }}</td>
                         {% if submittal_status == 'open' %}
-                            <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                            <td><a href="{% url 'submittal:edit_dollar_amount' submittal.id 'noi_semi_ann_actual' %}">Edit</a></td>
                         {% endif %}
                     </tr>
                 {% endif %}
@@ -80,23 +80,23 @@
                         <td>Budget ($):</td>
                         <td>{{ submittal.op_rev_qtr_budget }}</td>
                         {% if submittal_status == 'open' %}
-                            <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                            <td><a href="{% url 'submittal:edit_dollar_amount' submittal.id 'op_rev_qtr_budget' %}">Edit</a></td>
                         {% endif %}
                     </tr>
                     <tr>
                         <td>Actual ($):</td>
                         <td>{{ submittal.op_rev_qtr_actual }}</td>
                         {% if submittal_status == 'open' %}
-                            <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                            <td><a href="{% url 'submittal:edit_dollar_amount' submittal.id 'op_rev_qtr_actual' %}">Edit</a></td>
                         {% endif %}
                     </tr>
                 {% endif %}
                 <tr><td>---</td></tr>
                 <tr>
                     <td>Delinquency Rate:</td>
-                    <td>{{ delinquency.delinquency_rate }}</td>
+                    <td>{{ submittal.delinquency_rate }}</td>
                     {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                        <td><a href="{% url 'submittal:edit_rate' submittal.id 'delinquency_rate' %}">Edit</a></td>
                     {% endif %}
                 </tr>
                 <tr><td>---</td></tr>
@@ -120,7 +120,7 @@
     {% endif %}
 </table>
 
-{% if data_points_complete == complete %}
+{% if data_points_complete == 'complete' %}
     <p>Submit</p>
 {% endif %}
 

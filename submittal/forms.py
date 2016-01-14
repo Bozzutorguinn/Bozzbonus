@@ -72,3 +72,38 @@ class EnterOpeningDateForm(forms.Form):
         required=True,
         label='Day'
     )
+
+
+#use this form to edit any input that requires a percentage between 0% - 100%
+class EditRateForm(forms.Form):
+    def __init__(self,
+                 rate_choices,
+                 *args,
+                 **kwargs):
+        super(EditRateForm, self).__init__(*args, **kwargs)
+        self.fields['rate_amount'].choices = rate_choices
+
+    rate_amount = forms.DecimalField(max_digits=4, decimal_places=1, max_value=100.0, min_value=0, required=True, label='% Rate')
+
+#use this form to edit any input that requires a dollar amount
+class EditDollarInputForm(forms.Form):
+    dollar_amount = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0, required=True, label='$ Amount')
+
+#use this form to edit any input that requires a quantity to be entered, such as the number of bad debt write-offs
+class EditQuantityForm(forms.Form):
+    quantity_amt = forms.IntegerField(min_value=0, required=True, label='# Quantity')
+
+#use this form to edit any input that requires a yes/no response
+class EditYesNoForm(forms.Form):
+    def __init__(self,
+                 yes_no_choices,
+                 *args,
+                 **kwargs):
+        super(EnterYesNoForm, self).__init__(*args, **kwargs)
+        self.fields['yes_no_select'].choices = yes_no_choices
+
+    yes_no_select = forms.ChoiceField(
+        choices=(),
+        required=True,
+        label='Yes/No'
+    )
