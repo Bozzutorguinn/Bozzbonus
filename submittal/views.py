@@ -2,6 +2,8 @@ from django.shortcuts import render, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from property.models import Property
+from submittal_employees.models import Submittal_Employees
+from employees.models import Employees
 from .models import Submittal
 from .forms import EditLeasingStatusForm, EnterStabilizationDateForm, EnterOpeningDateForm, EditRateForm, EditDollarInputForm, EditQuantityForm, EditYesNoForm
 from user_access.tools import CheckAuthorization
@@ -41,7 +43,6 @@ def SubmittalDetail(request, submittal_id):
         if data_points_complete == 'incomplete' and submittal.data_complete == 1:
             submittal.data_complete = 0
             submittal.save()
-        print data_points_complete
         #check whether or not it is a fiscal half end
         fiscal_halfs = ConvertFiscalHalfs(property.fiscal_start)
         half_1 = fiscal_halfs['half_1']
@@ -62,6 +63,7 @@ def SubmittalDetail(request, submittal_id):
         if submittal.leasing_status == 'leaseup':
             if submittal.submittal_month == qtr_1 or submittal.submittal_month == qtr_2 or submittal.submittal_month == qtr_3 or submittal.submittal_month == qtr_4:
                 fiscal_qtr_end = 'Yes'
+        employees = SubmittalEmployees(submittal_id=submittal_id)
         context = {'submittal': submittal,
                    'property': property,
                    'lease_up_override': lease_up_override,
@@ -73,6 +75,7 @@ def SubmittalDetail(request, submittal_id):
                    'data_points_complete': data_points_complete,
                    'fiscal_half_end': fiscal_half_end,
                    'fiscal_qtr_end': fiscal_qtr_end,
+                   'employees': employees,
                    }
         return render(request, 'submittal/submittal_detail.html', context)
 
@@ -82,6 +85,7 @@ def EditLeasingStatus(request, submittal_id):
     property_id = submittal.prop_id
     property = Property.objects.get(id=property_id)
     options = LeasingStatusOptions()
+    input_form_title = 'Edit Leasing Status'
     #check that the user is authorized
     authorized_user = CheckAuthorization(request, property_id)
     if authorized_user == True:
@@ -114,6 +118,7 @@ def EditLeasingStatus(request, submittal_id):
                         return render(request, 'submittal/edit_leasing_status.html',{'form': form,
                                                                      'submittal': submittal,
                                                                      'property': property,
+                                                                    'input_form_title': input_form_title
                                                                      })
                     #check if the leasing status is going from leaseup to stabilized, and if so,
                     #redirect to a field where they can enter the stabilization date
@@ -136,6 +141,7 @@ def EditLeasingStatus(request, submittal_id):
         return render(request, 'submittal/edit_leasing_status.html',{'form': form,
                                                                      'submittal': submittal,
                                                                      'property': property,
+                                                                     'input_form_title': input_form_title,
                                                                      })
 @login_required
 def EditStabilizationDate(request, submittal_id):
@@ -143,6 +149,7 @@ def EditStabilizationDate(request, submittal_id):
     property_id = submittal.prop_id
     property = Property.objects.get(id=property_id)
     date_choices = DateChoices()
+    input_form_title = 'Edit Stabilization Date'
     authorized_user = CheckAuthorization(request, property_id)
     if authorized_user == True:
         if request.method == 'POST':
@@ -174,6 +181,7 @@ def EditStabilizationDate(request, submittal_id):
                         'property': property,
                         'submittal': submittal,
                         'message': message,
+                        'input_form_title': input_form_title,
                     }
                     return render(request, 'submittal/edit_stabilization_date.html', context)
         else:
@@ -186,6 +194,7 @@ def EditStabilizationDate(request, submittal_id):
                 'form': form,
                 'property': property,
                 'submittal': submittal,
+                'input_form_title': input_form_title,
             }
         return render(request, 'submittal/edit_stabilization_date.html', context)
 
@@ -195,6 +204,7 @@ def EditOpeningDate(request, submittal_id):
     property_id = submittal.prop_id
     property = Property.objects.get(id=property_id)
     date_choices = DateChoices()
+    input_form_title = 'Edit Opening Date'
     authorized_user = CheckAuthorization(request, property_id)
     if authorized_user == True:
         if request.method == 'POST':
@@ -226,6 +236,7 @@ def EditOpeningDate(request, submittal_id):
                         'property': property,
                         'submittal': submittal,
                         'message': message,
+                        'input_form_title': input_form_title,
                     }
                     return render(request, 'submittal/edit_opening_date.html', context)
         else:
@@ -238,6 +249,7 @@ def EditOpeningDate(request, submittal_id):
                 'form': form,
                 'property': property,
                 'submittal': submittal,
+                'input_form_title': input_form_title,
             }
         return render(request, 'submittal/edit_opening_date.html', context)
 
@@ -353,13 +365,68 @@ def EditDollarAmount(request, submittal_id, dollar_input_type):
             }
         return render(request, 'submittal/edit_input_form.html', context)
 
+
 @login_required
 def EditQuantityAmount(request, submittal_id, quantity_input_type):
     pass
 
 @login_required
 def EditYesNo(request, submittal_id, yes_no_type):
-    pass
+    submittal = Submittal.objects.get(id=submittal_id)
+    property_id = submittal.prop_id
+    property = Property.objects.get(id=property_id)
+    authorized_user = CheckAuthorization(request, property_id)
+    yes_no_choices = YesNoChoices()
+    input_form_title_options = {
+        'lease_up_override': LeaseUpOverrideName,
+        'bad_debt_writeoffs': BadDebtWriteOffsName,
+    }
+    input_form_title = input_form_title_options[yes_no_type]()
+    input_type = yes_no_type
+    if authorized_user == True:
+        if request.method == 'POST':
+            form = EditYesNoForm(
+                data=request.POST,
+                yes_no_choices=yes_no_choices,
+            )
+            if form.is_valid():
+                data = form.cleaned_data
+                amount = data['yes_no_select']
+                if input_type == 'lease_up_override':
+                    if amount == 'yes':
+                        submittal.lease_up_override = 1
+                    elif amount == 'no':
+                        submittal.lease_up_override = 0
+                if input_type == 'bad_debt_writeoffs':
+                    if amount == 'yes':
+                        submittal.bad_debt_writeoffs = 1
+                    elif amount == 'no':
+                        submittal.bad_debt_writeoffs = 0
+                submittal.save()
+                return HttpResponseRedirect(reverse('submittal:submittal_detail', kwargs={'submittal_id': submittal_id}))
+            else:
+                message = 'The entered selection is causing an error'
+                context = {
+                    'form': form,
+                    'property': property,
+                    'submittal': submittal,
+                    'message': message,
+                    'input_form_title': input_form_title,
+                    'input_type': input_type
+                }
+                return render(request, 'submittal/edit_yes_no_form.html', context)
+        else:
+            form = EditYesNoForm(
+                yes_no_choices=yes_no_choices,
+            )
+            context = {
+                'form': form,
+                'property': property,
+                'submittal': submittal,
+                'input_form_title': input_form_title,
+                'input_type': input_type
+            }
+        return render(request, 'submittal/edit_yes_no_form.html', context)
 
 def OpRevMonthBudgetName():
     return 'Total Operating Revenue - Monthly: Budgeted Amount'
@@ -384,6 +451,12 @@ def OccupancyRateName():
 
 def DelinquencyRateName():
     return 'Delinquency Rate %'
+
+def BadDebtWriteOffsName():
+    return 'Bad Debt Writeoffs'
+
+def LeaseUpOverrideName():
+    return 'Lease-Up Override'
 
 def LeasingStatusOptions():
     options = []
@@ -530,13 +603,13 @@ def CheckDataPoints(submittal_id):
     property_id = submittal.prop_id
     property = Property.objects.get(id=property_id)
     data_points_complete = 'complete'
-    if not submittal.occupancy_rate or submittal.occupancy_rate == '' or submittal.occupancy_rate == None or submittal.occupancy_rate == 'null':
+    if submittal.occupancy_rate == '' or submittal.occupancy_rate == None or submittal.occupancy_rate == 'null':
         data_points_complete = 'incomplete'
-    if not submittal.op_rev_month_actual or submittal.op_rev_month_actual == '' or submittal.op_rev_month_actual == None or submittal.op_rev_month_actual == 'null':
+    if submittal.op_rev_month_actual == '' or submittal.op_rev_month_actual == None or submittal.op_rev_month_actual == 'null':
         data_points_complete = 'incomplete'
-    if not submittal.op_rev_month_budget or submittal.op_rev_month_budget == '' or submittal.op_rev_month_budget == None or submittal.op_rev_month_budget == 'null':
+    if submittal.op_rev_month_budget == '' or submittal.op_rev_month_budget == None or submittal.op_rev_month_budget == 'null':
         data_points_complete = 'incomplete'
-    if not submittal.delinquency_rate or submittal.delinquency_rate == '' or submittal.delinquency_rate == None or submittal.delinquency_rate == 'null':
+    if submittal.delinquency_rate == '' or submittal.delinquency_rate == None or submittal.delinquency_rate == 'null':
         data_points_complete = 'incomplete'
     if submittal.bad_debt_writeoffs == '' or submittal.bad_debt_writeoffs == None or submittal.bad_debt_writeoffs == 'null':
         data_points_complete = 'incomplete'
@@ -548,16 +621,16 @@ def CheckDataPoints(submittal_id):
     half_2 = fiscal_halfs['half_2']
     if submittal.leasing_status == 'stabilized':
         if submittal.submittal_month == half_1 or submittal.submittal_month == half_2:
-            if not submittal.noi_semi_ann_actual or submittal.noi_semi_ann_actual == '' or submittal.noi_semi_ann_actual == None or submittal.noi_semi_ann_actual == 'null':
+            if submittal.noi_semi_ann_actual == '' or submittal.noi_semi_ann_actual == None or submittal.noi_semi_ann_actual == 'null':
                 data_points_complete = 'incomplete'
-            if not submittal.noi_semi_ann_budget or submittal.noi_semi_ann_budget == '' or submittal.noi_semi_ann_budget == None or submittal.noi_semi_ann_budget == 'null':
+            if submittal.noi_semi_ann_budget == '' or submittal.noi_semi_ann_budget == None or submittal.noi_semi_ann_budget == 'null':
                 data_points_complete = 'incomplete'
         #check whether or not the property has been in leaseup in the last 6 months
             leaseup_fiscal_half_check = CheckFiscalHalfLeaseup(property_id=property_id)
             if leaseup_fiscal_half_check == True:
-                if not submittal.op_rev_qtr_actual or submittal.op_rev_qtr_actual == '' or submittal.op_rev_qtr_actual == None or submittal.op_rev_qtr_actual == 'null':
+                if submittal.op_rev_qtr_actual == '' or submittal.op_rev_qtr_actual == None or submittal.op_rev_qtr_actual == 'null':
                     data_points_complete = 'incomplete'
-                if not submittal.op_rev_qtr_budget or submittal.op_rev_qtr_budget == '' or submittal.op_rev_qtr_budget == None or submittal.op_rev_qtr_budget == 'null':
+                if submittal.op_rev_qtr_budget == '' or submittal.op_rev_qtr_budget == None or submittal.op_rev_qtr_budget == 'null':
                     data_points_complete = 'incomplete'
     fiscal_quarters = ConvertFiscalQuarters(fiscal_year_start_month)
     qtr_1 = fiscal_quarters['qtr_1']
@@ -566,9 +639,9 @@ def CheckDataPoints(submittal_id):
     qtr_4 = fiscal_quarters['qtr_4']
     if submittal.leasing_status == 'leaseup':
         if submittal.submittal_month == qtr_1 or submittal.submittal_month == qtr_2 or submittal.submittal_month == qtr_3 or submittal.submittal_month == qtr_4:
-            if not submittal.op_rev_qtr_actual or submittal.op_rev_qtr_actual == '' or submittal.op_rev_qtr_actual == None or submittal.op_rev_qtr_actual == 'null':
+            if submittal.op_rev_qtr_actual == '' or submittal.op_rev_qtr_actual == None or submittal.op_rev_qtr_actual == 'null':
                     data_points_complete = 'incomplete'
-            if not submittal.op_rev_qtr_budget or submittal.op_rev_qtr_budget == '' or submittal.op_rev_qtr_budget == None or submittal.op_rev_qtr_budget == 'null':
+            if submittal.op_rev_qtr_budget == '' or submittal.op_rev_qtr_budget == None or submittal.op_rev_qtr_budget == 'null':
                     data_points_complete = 'incomplete'
     return data_points_complete
 
@@ -625,3 +698,17 @@ def PercentRateChoice():
         n = i / 10
         rate_choices.append((n,n),)
     return rate_choices
+
+def YesNoChoices():
+    choices = []
+    choices.append(('yes', 'yes'),)
+    choices.append(('no', 'no'),)
+    return choices
+
+def SubmittalEmployees(submittal_id):
+    submittal_employees = Submittal_Employees.objects.filter(submittal_id=submittal_id)
+    employees = []
+    for submittal_employee in submittal_employees:
+        employee = Employees.objects.get(id=submittal_employee.employee_id)
+        employees.append(employee)
+    return employees

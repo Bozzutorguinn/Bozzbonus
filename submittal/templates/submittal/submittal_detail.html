@@ -27,7 +27,7 @@
             </tr>
             {% if stabilization_date_complete == 'complete' %}
                 <tr>
-                    <td>Occupancy Rate (%):</td>
+                    <td>End of Period Occupancy Rate (%):</td>
                     <td>{{ submittal.occupancy_rate }}</td>
                     {% if submittal_status == 'open' %}
                         <td><a href="{% url 'submittal:edit_rate' submittal.id 'occupancy_rate' %}">Edit</a></td>
@@ -93,7 +93,7 @@
                 {% endif %}
                 <tr><td>---</td></tr>
                 <tr>
-                    <td>Delinquency Rate:</td>
+                    <td>Delinquency Rate (%):</td>
                     <td>{{ submittal.delinquency_rate }}</td>
                     {% if submittal_status == 'open' %}
                         <td><a href="{% url 'submittal:edit_rate' submittal.id 'delinquency_rate' %}">Edit</a></td>
@@ -101,18 +101,18 @@
                 </tr>
                 <tr><td>---</td></tr>
                 <tr>
-                    <td>Bad Debt Write-Offs</td>
+                    <td>Bad Debt Write-Offs (Yes/No)</td>
                     <td>{{ bad_debt_writeoff }}</td>
                     {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                        <td><a href="{% url 'submittal:edit_yes_no' submittal.id 'bad_debt_writeoffs' %}">Edit</a></td>
                     {% endif %}
                 </tr>
                 <tr><td>---</td></tr>
                 <tr>
-                    <td>Lease-Up Override Bonus:</td>
+                    <td>Lease-Up Override Bonus (Yes/No):</td>
                     <td>{{ lease_up_override }}</td>
                     {% if submittal_status == 'open' %}
-                        <td><a href="{% url 'submittal:edit_leasing_status' submittal.id %}">Edit</a></td>
+                        <td><a href="{% url 'submittal:edit_yes_no' submittal.id 'lease_up_override' %}">Edit</a></td>
                     {% endif %}
                 </tr>
             {% endif %}
@@ -121,6 +121,28 @@
 </table>
 
 {% if data_points_complete == 'complete' %}
+    <p>Employees</p>
+    <table style="border: 1px solid black; width: 100%">
+        <tr>
+            <td>Employee #</td>
+            <td>First Name</td>
+            <td>Last Name</td>
+            <td>Position</td>
+            <td>Status</td>
+        </tr>
+        {% for employee in employees.all %}
+            <tr>
+                <td>{{ employee.emp_id }}</td>
+                <td>{{ employee.emp_name_first }}</td>
+                <td>{{ employee.emp_name_last }}</td>
+                <td>{{ employee.job_title }}</td>
+                <td>{{ employee.emp_status }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+
+{% if employee_selections == 'complete' %}
     <p>Submit</p>
 {% endif %}
 

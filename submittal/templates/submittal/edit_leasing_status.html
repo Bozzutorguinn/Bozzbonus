@@ -2,9 +2,7 @@
 
 {% block content %}
 
-<p>Property: {{ property.prop_name }}</p>
-<p>Submittal: {{ submittal.submittal_month }}/{{ submittal.submittal_year }}</p>
-<p>Edit Leasing Status</p>
+{% include 'Project/submittal_input_base.html' %}
 
 <form action="{% url 'submittal:edit_leasing_status' submittal.id %}" method="post">
     {% csrf_token %}

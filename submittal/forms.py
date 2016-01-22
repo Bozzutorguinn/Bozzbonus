@@ -99,7 +99,7 @@ class EditYesNoForm(forms.Form):
                  yes_no_choices,
                  *args,
                  **kwargs):
-        super(EnterYesNoForm, self).__init__(*args, **kwargs)
+        super(EditYesNoForm, self).__init__(*args, **kwargs)
         self.fields['yes_no_select'].choices = yes_no_choices
 
     yes_no_select = forms.ChoiceField(
