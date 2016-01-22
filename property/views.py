@@ -25,4 +25,4 @@ def PropertyDetail(request, property_id):
         return render(request, 'property/property_submittals.html', context)
 
 def PropertyTest(request):
-    return render(request, 'property/property_test.html', context)
+    return render(request, 'property/property_test.html')
