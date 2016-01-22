@@ -23,3 +23,6 @@ def PropertyDetail(request, property_id):
                    'property': property,
                    }
         return render(request, 'property/property_submittals.html', context)
+
+def PropertyTest(request):
+    return render(request, 'property/index.html', context)
