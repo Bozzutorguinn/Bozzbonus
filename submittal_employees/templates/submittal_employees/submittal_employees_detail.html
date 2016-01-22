@@ -1,0 +1,31 @@
+{% extends 'Project/base.html' %}
+
+{% block content %}
+
+{% include 'Project/submittal_input_base.html' %}
+
+<p>Employees</p>
+<table style="border: 1px solid black; width: 100%">
+    <tr>
+        <td>Employee #</td>
+        <td>First Name</td>
+        <td>Last Name</td>
+        <td>Position</td>
+        <td>Status</td>
+        <td></td>
+    </tr>
+    {% for employee in submittal_employees.all %}
+        <tr>
+            <td>{{ employee.emp_id }}</td>
+            <td>{{ employee.emp_name_first }}</td>
+            <td>{{ employee.emp_name_last }}</td>
+            <td>{{ employee.job_title }}</td>
+            <td>{{ employee.emp_status }}</td>
+            <td><a href="{{% url 'submittal:edit_dollar_amount' submittal.id 'op_rev_month_actual' %}}">Remove</a></td>
+        </tr>
+    {% endfor %}
+</table>
+
+<p><a>Add Employee</a></p>
+
+{% endblock %}

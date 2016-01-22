@@ -1,0 +1,15 @@
+{% extends 'Project/base.html' %}
+
+{% block content %}
+
+{% include 'Project/submittal_input_base.html' %}
+
+<form action="{% url 'submittal:edit_yes_no' submittal.id input_type %}" method="post">
+    {% csrf_token %}
+    <table>
+        {{ form.as_table }}
+    </table>
+    <input type="submit" value="Save" />
+</form>
+
+{% endblock %}
