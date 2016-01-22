@@ -38,7 +38,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-LOGIN_URL = '/user_access/login/'
+if system_type == 'dev_mac':
+    LOGIN_URL = '/user_access/login/'
+if system_type == 'prod_linux':
+    LOGIN_URL = '/Project/user_access/login/'
 
 LOGIN_REDIRECT_URL = '/property/property/'
 
